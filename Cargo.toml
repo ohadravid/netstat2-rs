@@ -1,0 +1,24 @@
+[package]
+name = "netstat"
+version = "0.7.0"
+authors = ["ivxvm <ivxvm@protonmail.com>"]
+license = "MIT/Apache-2.0"
+readme = "README.md"
+repository = "https://github.com/ivxvm/netstat-rs"
+documentation = "https://docs.rs/netstat"
+categories = ["network-programming", "os"]
+keywords = ["network", "socket"]
+description = """
+Cross-platform library to retrieve network sockets information.
+"""
+
+[dependencies]
+libc = "0.2"
+bitflags = "1.0"
+
+[dev-dependencies]
+easybench = "0.1"
+
+[[bench]]
+name = "get_sockets_info_benchmark"
+harness = false
