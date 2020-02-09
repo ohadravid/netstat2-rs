@@ -1,4 +1,4 @@
-use crate::integrations::windows::socket_table::SocketTable;
+use crate::integrations::windows::socket_table_extended::SocketTable;
 use crate::types::*;
 
 pub struct SocketTableIterator {

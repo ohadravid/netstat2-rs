@@ -6,7 +6,7 @@ use crate::types::*;
 pub fn iterate_sockets_info(
     af_flags: AddressFamilyFlags,
     proto_flags: ProtocolFlags,
-) -> Result<impl Iterator<Item = Result<SocketInfo, Error>>, Error> {
+) -> Result<impl Iterator<Item=Result<SocketInfo, Error>>, Error> {
     let ipv4 = af_flags.contains(AddressFamilyFlags::IPV4);
     let ipv6 = af_flags.contains(AddressFamilyFlags::IPV6);
     let tcp = proto_flags.contains(ProtocolFlags::TCP);
@@ -28,5 +28,24 @@ pub fn iterate_sockets_info(
             iterators.push(SocketTableIterator::new::<MIB_UDP6TABLE_OWNER_PID>()?);
         }
     }
+
+    Ok(iterators.into_iter().flatten())
+}
+
+/// Iterate through sockets information. Works on older versions of Windows (like XP and 2003).
+pub fn iterate_sockets_info_without_pids(
+    proto_flags: ProtocolFlags,
+) -> Result<impl Iterator<Item=Result<SocketInfo, Error>>, Error> {
+    let tcp = proto_flags.contains(ProtocolFlags::TCP);
+    let udp = proto_flags.contains(ProtocolFlags::UDP);
+
+    let mut iterators = Vec::with_capacity(4);
+    if tcp {
+        iterators.push(SocketTableIterator::new::<MIB_TCPTABLE>()?);
+    }
+    if udp {
+        iterators.push(SocketTableIterator::new::<MIB_UDPTABLE>()?);
+    }
+
     Ok(iterators.into_iter().flatten())
 }

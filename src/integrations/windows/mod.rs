@@ -1,7 +1,37 @@
 mod api;
 mod ext;
 mod ffi;
+mod socket_table_extended;
 mod socket_table;
 mod socket_table_iterator;
 
 pub use self::api::*;
+
+#[cfg(test)]
+mod tests {
+    use crate::integrations::windows::socket_table_iterator::SocketTableIterator;
+    use crate::integrations::windows::ffi::*;
+
+    #[test]
+    fn test_iterate_over_all_supported_tables() {
+        let table: Vec<_> = SocketTableIterator::new::<MIB_TCPTABLE_OWNER_PID>().unwrap().collect();
+        assert!(table.len() > 0);
+
+        let table: Vec<_> = SocketTableIterator::new::<MIB_UDPTABLE_OWNER_PID>().unwrap().collect();
+        assert!(table.len() > 0);
+
+        let table: Vec<_> = SocketTableIterator::new::<MIB_TCP6TABLE_OWNER_PID>().unwrap().collect();
+        assert!(table.len() > 0);
+
+        let table: Vec<_> = SocketTableIterator::new::<MIB_UDP6TABLE_OWNER_PID>().unwrap().collect();
+        assert!(table.len() > 0);
+
+
+        // Old API versions.
+        let table: Vec<_> = SocketTableIterator::new::<MIB_TCPTABLE>().unwrap().collect();
+        assert!(table.len() > 0);
+
+        let table: Vec<_> = SocketTableIterator::new::<MIB_UDPTABLE>().unwrap().collect();
+        assert!(table.len() > 0);
+    }
+}

@@ -2,7 +2,7 @@ use crate::types::tcp_state::TcpState;
 use std::net::IpAddr;
 
 /// General socket information.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct SocketInfo {
     /// Protocol-specific socket information.
     pub protocol_socket_info: ProtocolSocketInfo,
@@ -13,7 +13,7 @@ pub struct SocketInfo {
 }
 
 /// Protocol-specific socket information.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum ProtocolSocketInfo {
     /// TCP-specific socket information.
     Tcp(TcpSocketInfo),
@@ -22,7 +22,7 @@ pub enum ProtocolSocketInfo {
 }
 
 /// TCP-specific socket information.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct TcpSocketInfo {
     pub local_addr: IpAddr,
     pub local_port: u16,
@@ -32,7 +32,7 @@ pub struct TcpSocketInfo {
 }
 
 /// UDP-specific socket information.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct UdpSocketInfo {
     pub local_addr: IpAddr,
     pub local_port: u16,

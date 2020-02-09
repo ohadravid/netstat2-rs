@@ -26,4 +26,13 @@ pub enum Error {
 
     #[error("Unsupported file descriptor")]
     UnsupportedFileDescriptor,
+
+    #[error("Failed to allocate buffer")]
+    FailedToAllocateBuffer,
+
+    #[error("Failed to get UDP table")]
+    FailedToGetTcpTable(i32),
+
+    #[error("Failed to get UDP table")]
+    FailedToGetUdpTable(i32),
 }
