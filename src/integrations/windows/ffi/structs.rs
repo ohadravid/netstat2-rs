@@ -30,4 +30,3 @@ pub struct MIB_TCPROW {
     pub remote_addr: DWORD,
     pub remote_port: DWORD,
 }
-

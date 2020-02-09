@@ -30,33 +30,67 @@ mod test_readme {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::net::{Ipv4Addr, TcpListener, IpAddr};
+    use std::net::{IpAddr, Ipv4Addr, TcpListener, UdpSocket};
     use std::process;
 
     #[test]
-    fn test_it_works() {
+    fn listening_tcp_socket_is_found() {
         let listener = TcpListener::bind("127.0.0.1:0").unwrap();
 
         let open_port = listener.local_addr().unwrap().port();
         let pid = process::id();
 
         let af_flags = AddressFamilyFlags::all();
-        let proto_flags = ProtocolFlags::all();
+        let proto_flags = ProtocolFlags::TCP;
 
         let sock_info = get_sockets_info(af_flags, proto_flags).unwrap();
 
         assert!(sock_info.len() > 0);
 
-        let sock = sock_info.into_iter().find(|s| s.associated_pids.contains(&pid)).unwrap();
+        let sock = sock_info
+            .into_iter()
+            .find(|s| s.associated_pids.contains(&pid))
+            .unwrap();
 
-        assert_eq!(sock.protocol_socket_info,
-                   ProtocolSocketInfo::Tcp(TcpSocketInfo {
-                       local_addr: IpAddr::V4(Ipv4Addr::LOCALHOST),
-                       local_port: open_port,
-                       remote_addr: IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)),
-                       remote_port: 0,
-                       state: TcpState::Listen,
-                   }));
+        assert_eq!(
+            sock.protocol_socket_info,
+            ProtocolSocketInfo::Tcp(TcpSocketInfo {
+                local_addr: IpAddr::V4(Ipv4Addr::LOCALHOST),
+                local_port: open_port,
+                remote_addr: IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)),
+                remote_port: 0,
+                state: TcpState::Listen,
+            })
+        );
+        assert_eq!(sock.associated_pids, vec![pid]);
+    }
+
+    #[test]
+    fn listening_udp_socket_is_found() {
+        let listener = UdpSocket::bind("127.0.0.1:0").unwrap();
+
+        let open_port = listener.local_addr().unwrap().port();
+        let pid = process::id();
+
+        let af_flags = AddressFamilyFlags::all();
+        let proto_flags = ProtocolFlags::UDP;
+
+        let sock_info = get_sockets_info(af_flags, proto_flags).unwrap();
+
+        assert!(sock_info.len() > 0);
+
+        let sock = sock_info
+            .into_iter()
+            .find(|s| s.associated_pids.contains(&pid))
+            .unwrap();
+
+        assert_eq!(
+            sock.protocol_socket_info,
+            ProtocolSocketInfo::Udp(UdpSocketInfo {
+                local_addr: IpAddr::V4(Ipv4Addr::LOCALHOST),
+                local_port: open_port,
+            })
+        );
         assert_eq!(sock.associated_pids, vec![pid]);
     }
 

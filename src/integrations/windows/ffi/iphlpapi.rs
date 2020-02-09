@@ -18,14 +18,6 @@ extern "system" {
         TableClass: UDP_TABLE_CLASS,
         Reserved: ULONG,
     ) -> DWORD;
-    pub fn GetTcpTable(
-        pTcpTable: PVOID,
-        pdwSize: PDWORD,
-        bOrder: BOOL,
-    ) -> DWORD;
-    pub fn GetUdpTable(
-        pUdpTable: PVOID,
-        pdwSize: PDWORD,
-        bOrder: BOOL,
-    ) -> DWORD;
+    pub fn GetTcpTable(pTcpTable: PVOID, pdwSize: PDWORD, bOrder: BOOL) -> DWORD;
+    pub fn GetUdpTable(pUdpTable: PVOID, pdwSize: PDWORD, bOrder: BOOL) -> DWORD;
 }
