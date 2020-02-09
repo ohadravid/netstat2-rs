@@ -7,6 +7,16 @@ use std::io;
 use std::mem::size_of;
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
 
+#[cfg(target_env = "musl")]
+#[repr(C)]
+pub struct nlmsghdr {
+    pub nlmsg_len: u32,
+    pub nlmsg_type: u16,
+    pub nlmsg_flags: u16,
+    pub nlmsg_seq: u32,
+    pub nlmsg_pid: u32,
+}
+
 const TCPF_ALL: __u32 = 0xFFF;
 const SOCKET_BUFFER_SIZE: size_t = 8192;
 
@@ -104,15 +114,13 @@ unsafe fn send_diag_msg(sockfd: c_int, family: __u8, protocol: __u8) -> Result<(
             iov_len: size_of::<inet_diag_req_v2>() as size_t,
         },
     ];
-    let msg = msghdr {
-        msg_name: &mut sa as *mut _ as *mut c_void,
-        msg_namelen: size_of::<sockaddr_nl>() as c_uint,
-        msg_iov: &mut iov[0],
-        msg_iovlen: 2,
-        msg_control: std::ptr::null_mut(),
-        msg_controllen: 0,
-        msg_flags: 0,
-    };
+
+    let mut msg: msghdr = std::mem::zeroed();
+    msg.msg_name = &mut sa as *mut _ as *mut _;
+    msg.msg_namelen = size_of::<sockaddr_nl>() as c_uint;
+    msg.msg_iov = &mut iov[0];
+    msg.msg_iovlen = 2;
+
     match sendmsg(sockfd, &msg, 0) {
         -1 => Result::Err(Error::OsError(io::Error::last_os_error())),
         _ => Result::Ok(()),
