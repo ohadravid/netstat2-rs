@@ -1,0 +1,29 @@
+name: ci
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-latest
+          - windows-latest
+    runs-on: ${{ matrix.os }}
+    env:
+      RUST_BACKTRACE: 1
+    steps:
+      - uses: actions/checkout@v1
+        with:
+          submodules: true
+
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: "1.39.0"
+          default: true
+
+      - run: cargo test
