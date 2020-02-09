@@ -1,7 +1,7 @@
 use crate::integrations::windows::ffi::*;
+use crate::types::*;
 use std;
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
-use crate::types::*;
 
 pub trait SocketTable {
     fn get_table() -> Result<Vec<u8>, Error>;

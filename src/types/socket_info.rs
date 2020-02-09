@@ -1,5 +1,5 @@
-use std::net::IpAddr;
 use crate::types::tcp_state::TcpState;
+use std::net::IpAddr;
 
 /// General socket information.
 #[derive(Clone, Debug)]
