@@ -74,7 +74,7 @@ impl Drop for NetlinkIterator {
 }
 
 unsafe fn send_diag_msg(sockfd: c_int, family: __u8, protocol: __u8) -> Result<(), Error> {
-    let mut sa: sockaddr_nl = std::mem::uninitialized();
+    let mut sa: sockaddr_nl = std::mem::zeroed();
     sa.nl_family = AF_NETLINK as sa_family_t;
     sa.nl_pid = 0;
     sa.nl_groups = 0;
