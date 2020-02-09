@@ -1,5 +1,6 @@
 use crate::integrations::windows::ffi::*;
 use crate::types::*;
+use crate::types::error::*;
 use std;
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
 

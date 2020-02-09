@@ -1,5 +1,6 @@
 use crate::integrations::linux::ffi::*;
 use crate::types::*;
+use crate::types::error::*;
 use libc::*;
 use std;
 use std::io;

@@ -1,4 +1,5 @@
 use crate::integrations::*;
+use crate::types::error::Error;
 use crate::types::*;
 
 /// Retrieve sockets information as a vector.

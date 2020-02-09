@@ -16,7 +16,7 @@ impl From<ffi::DWORD> for TcpState {
             ffi::MIB_TCP_STATE_LAST_ACK => TcpState::LastAck,
             ffi::MIB_TCP_STATE_TIME_WAIT => TcpState::TimeWait,
             ffi::MIB_TCP_STATE_DELETE_TCB => TcpState::DeleteTcb,
-            _ => panic!("Unknown TcpState!"),
+            _ => TcpState::Unknown,
         }
     }
 }

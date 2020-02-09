@@ -1,4 +1,5 @@
 use crate::integrations::osx::netstat::*;
+use crate::types::error::Error;
 use crate::types::*;
 
 /// Iterate through sockets information.

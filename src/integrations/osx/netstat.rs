@@ -12,12 +12,9 @@ use std::ptr;
 use std::{io, mem};
 
 use crate::integrations::osx::ffi::libproc::*;
+use crate::types::error::Error;
 use crate::types::{AddressFamilyFlags, ProtocolFlags};
-use crate::{Error, UdpSocketInfo};
-use crate::{ProtocolSocketInfo, SocketInfo, TcpSocketInfo, TcpState};
-use bitflags::_core::result::Result::Err;
-use std::collections::hash_map::Entry;
-use std::collections::HashMap;
+use crate::{ProtocolSocketInfo, SocketInfo, TcpSocketInfo, TcpState, UdpSocketInfo};
 
 pub type PID = c_int;
 

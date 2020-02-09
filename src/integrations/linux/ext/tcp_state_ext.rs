@@ -14,7 +14,7 @@ impl From<u8> for TcpState {
             9 => TcpState::LastAck,
             10 => TcpState::Listen,
             11 => TcpState::Closing,
-            _ => panic!("Unknown TcpState!"),
+            _ => TcpState::Unknown,
         }
     }
 }

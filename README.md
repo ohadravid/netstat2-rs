@@ -8,17 +8,24 @@ Cross-platform library to retrieve network sockets information.
 Aims to be optimal by using low-level OS APIs instead of command line utilities.
 Provides unified interface and returns data structures which may have additional fields depending on platform.
 
+```toml
+# Cargo.toml
+[dependencies]
+netstat2 = "0.8"
+```
+
 This is a fork based on the [netstat](https://crates.io/crates/netstat) crate by [ivxvm](https://github.com/ivxvm).
 
 ## Example
 
 ```rust
-use netstat2::*;
+use netstat2::{get_sockets_info, AddressFamilyFlags, ProtocolFlags, ProtocolSocketInfo};
 
-fn main() {
+fn main() -> Result<(), Box<dyn std::error::Error>> {
     let af_flags = AddressFamilyFlags::IPV4 | AddressFamilyFlags::IPV6;
     let proto_flags = ProtocolFlags::TCP | ProtocolFlags::UDP;
-    let sockets_info = get_sockets_info(af_flags, proto_flags).unwrap();
+    let sockets_info = get_sockets_info(af_flags, proto_flags)?;
+    
     for si in sockets_info {
         match si.protocol_socket_info {
             ProtocolSocketInfo::Tcp(tcp_si) => println!(
@@ -36,6 +43,8 @@ fn main() {
             ),
         }
     }
+
+    Ok(())
 }
 ```
 

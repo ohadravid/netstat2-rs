@@ -1,5 +1,6 @@
 use crate::integrations::windows::socket_table_extended::SocketTable;
 use crate::types::*;
+use crate::types::error::*;
 
 pub struct SocketTableIterator {
     table: Vec<u8>,

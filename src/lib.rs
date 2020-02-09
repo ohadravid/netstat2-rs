@@ -1,12 +1,41 @@
 //! Cross-platform library to retrieve network sockets information.
 //! Tries to be optimal by using low-level OS APIs instead of command line utilities.
 //! Provides unified interface and returns data structures which may have additional fields depending on platform.
-
+//!
+//! # Example
+//!
+//! ```rust
+//! use netstat2::*;
+//!
+//! # fn main() -> Result<(), netstat2::error::Error> {
+//! let af_flags = AddressFamilyFlags::IPV4 | AddressFamilyFlags::IPV6;
+//! let proto_flags = ProtocolFlags::TCP | ProtocolFlags::UDP;
+//! let sockets_info = get_sockets_info(af_flags, proto_flags)?;
+//!
+//! for si in sockets_info {
+//!     match si.protocol_socket_info {
+//!         ProtocolSocketInfo::Tcp(tcp_si) => println!(
+//!             "TCP {}:{} -> {}:{} {:?} - {}",
+//!             tcp_si.local_addr,
+//!             tcp_si.local_port,
+//!             tcp_si.remote_addr,
+//!             tcp_si.remote_port,
+//!             si.associated_pids,
+//!             tcp_si.state
+//!         ),
+//!         ProtocolSocketInfo::Udp(udp_si) => println!(
+//!             "UDP {}:{} -> *:* {:?}",
+//!             udp_si.local_addr, udp_si.local_port, si.associated_pids
+//!         ),
+//!     }
+//! }
+//! #     Ok(())
+//! # }
+//! ```
 #![allow(non_camel_case_types)]
 
 #[macro_use]
 extern crate bitflags;
-extern crate libc;
 
 mod integrations;
 mod types;

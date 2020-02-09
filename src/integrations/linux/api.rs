@@ -1,5 +1,6 @@
 use crate::integrations::linux::netlink_iterator::*;
 use crate::integrations::linux::procfs::*;
+use crate::types::error::Error;
 use crate::types::*;
 use libc::*;
 

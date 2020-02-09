@@ -1,6 +1,7 @@
 use crate::integrations::windows::ffi::*;
 use crate::integrations::windows::socket_table_extended::SocketTable;
 use crate::types::*;
+use crate::types::error::*;
 use std;
 use std::net::{IpAddr, Ipv4Addr};
 
