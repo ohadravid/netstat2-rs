@@ -1,9 +1,11 @@
-netstat
+netstat2
 =======
 
-[![Latest version](https://img.shields.io/crates/v/netstat.svg)](https://crates.io/crates/netstat)
-[![Documentation](https://docs.rs/netstat/badge.svg)](https://docs.rs/netstat)
-![License](https://img.shields.io/crates/l/netstat.svg)
+This is a fork based on the [netstat](https://crates.io/crates/netstat) crate by [ivxvm](https://github.com/ivxvm).
+
+[![Latest version](https://img.shields.io/crates/v/netstat2.svg)](https://crates.io/crates/netstat2)
+[![Documentation](https://docs.rs/netstat2/badge.svg)](https://docs.rs/netstat2)
+![License](https://img.shields.io/crates/l/netstat2.svg)
 
 Cross-platform library to retrieve network sockets information.
 Aims to be optimal by using low-level OS APIs instead of command line utilities.
