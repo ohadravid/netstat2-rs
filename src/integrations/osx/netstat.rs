@@ -1,7 +1,7 @@
 use std::io::{BufRead, BufReader};
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
 use std::process::{Command, Stdio};
-use types::*;
+use crate::types::*;
 
 pub fn iterate_netstat_info(
     af_flags: AddressFamilyFlags,

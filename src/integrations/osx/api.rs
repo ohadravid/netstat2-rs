@@ -1,5 +1,5 @@
-use integrations::osx::netstat::*;
-use types::*;
+use crate::integrations::osx::netstat::*;
+use crate::types::*;
 
 /// Iterate through sockets information.
 pub fn iterate_sockets_info(

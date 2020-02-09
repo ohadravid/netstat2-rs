@@ -14,9 +14,7 @@ Provides unified interface and returns data structures which may have additional
 ## Example
 
 ```rust
-extern crate netstat;
-
-use netstat::*;
+use netstat2::*;
 
 fn main() {
     let af_flags = AddressFamilyFlags::IPV4 | AddressFamilyFlags::IPV6;

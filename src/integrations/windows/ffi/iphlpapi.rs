@@ -1,4 +1,4 @@
-use integrations::windows::ffi::*;
+use crate::integrations::windows::ffi::*;
 
 #[link(name = "iphlpapi")]
 extern "system" {

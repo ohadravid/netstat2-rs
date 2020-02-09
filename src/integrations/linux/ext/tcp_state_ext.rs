@@ -1,4 +1,4 @@
-use types::TcpState;
+use crate::types::TcpState;
 
 impl From<u8> for TcpState {
     fn from(tcp_state: u8) -> TcpState {

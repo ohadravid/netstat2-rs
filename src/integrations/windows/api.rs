@@ -1,6 +1,6 @@
-use integrations::windows::ffi::*;
-use integrations::windows::socket_table_iterator::SocketTableIterator;
-use types::*;
+use crate::integrations::windows::ffi::*;
+use crate::integrations::windows::socket_table_iterator::SocketTableIterator;
+use crate::types::*;
 
 /// Iterate through sockets information.
 pub fn iterate_sockets_info(

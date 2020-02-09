@@ -12,8 +12,21 @@ mod integrations;
 mod types;
 mod utils;
 
-pub use integrations::*;
-pub use types::*;
+pub use crate::integrations::*;
+pub use crate::types::*;
+
+// Cannot use `cfg(test)` here since `rustdoc` won't look at it.
+#[cfg(debug_assertions)]
+mod test_readme {
+    macro_rules! calculated_doc {
+        ($doc:expr, $id:ident) => {
+            #[doc = $doc]
+            enum $id {}
+        }
+    }
+
+    calculated_doc!(include_str!("../README.md"), _DoctestReadme);
+}
 
 #[cfg(test)]
 mod tests {

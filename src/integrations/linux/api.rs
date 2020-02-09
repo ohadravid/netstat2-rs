@@ -1,7 +1,7 @@
-use integrations::linux::netlink_iterator::*;
-use integrations::linux::procfs::*;
+use crate::integrations::linux::netlink_iterator::*;
+use crate::integrations::linux::procfs::*;
 use libc::*;
-use types::*;
+use crate::types::*;
 
 /// Iterate through sockets information.
 pub fn iterate_sockets_info(

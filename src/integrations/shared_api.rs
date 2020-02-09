@@ -1,5 +1,5 @@
-use integrations::*;
-use types::*;
+use crate::integrations::*;
+use crate::types::*;
 
 /// Retrieve sockets information as a vector.
 /// Short-circuits on any error along the way.

@@ -1,8 +1,8 @@
 extern crate easybench;
-extern crate netstat;
+extern crate netstat2;
 
 use easybench::bench;
-use netstat::*;
+use netstat2::*;
 
 fn main() {
     println!(

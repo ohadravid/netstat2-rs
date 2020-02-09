@@ -1,10 +1,10 @@
-use integrations::linux::ffi::*;
+use crate::integrations::linux::ffi::*;
 use libc::*;
 use std;
 use std::mem::size_of;
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
-use types::*;
-use utils::*;
+use crate::types::*;
+use crate::utils::*;
 
 const TCPF_ALL: __u32 = 0xFFF;
 const SOCKET_BUFFER_SIZE: size_t = 8192;
