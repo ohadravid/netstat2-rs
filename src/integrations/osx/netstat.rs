@@ -1,7 +1,6 @@
 #![allow(unused)]
 
 use byteorder::{ByteOrder, NetworkEndian};
-use errno::errno;
 
 use enum_primitive_derive::Primitive;
 use num_traits::FromPrimitive;
