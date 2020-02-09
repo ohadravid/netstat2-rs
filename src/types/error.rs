@@ -35,4 +35,10 @@ pub enum Error {
 
     #[error("Failed to get UDP table")]
     FailedToGetUdpTable(i32),
+
+    #[error("NetLink Error")]
+    NetLinkError,
+
+    #[error("Found unknown protocol {0}")]
+    UnknownProtocol(u8),
 }

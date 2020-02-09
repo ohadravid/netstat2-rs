@@ -14,7 +14,7 @@ impl<'a> From<&'a str> for TcpState {
             "CLOSING" => TcpState::Closing,
             "LAST_ACK" => TcpState::LastAck,
             "TIME_WAIT" => TcpState::TimeWait,
-            _ => panic!("Unknown TcpState!"),
+            _ => TcpState::Unknown,
         }
     }
 }

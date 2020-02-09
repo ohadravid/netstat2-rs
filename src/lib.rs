@@ -10,7 +10,6 @@ extern crate libc;
 
 mod integrations;
 mod types;
-mod utils;
 
 pub use crate::integrations::*;
 pub use crate::types::*;
@@ -48,16 +47,17 @@ mod tests {
 
         assert!(sock_info.len() > 0);
 
-        assert!(sock_info.contains(&SocketInfo {
-            protocol_socket_info: ProtocolSocketInfo::Tcp(TcpSocketInfo {
-                local_addr: IpAddr::V4(Ipv4Addr::LOCALHOST),
-                local_port: open_port,
-                remote_addr: IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)),
-                remote_port: 0,
-                state: TcpState::Listen,
-            }),
-            associated_pids: vec![pid],
-        }));
+        let sock = sock_info.into_iter().find(|s| s.associated_pids.contains(&pid)).unwrap();
+
+        assert_eq!(sock.protocol_socket_info,
+                   ProtocolSocketInfo::Tcp(TcpSocketInfo {
+                       local_addr: IpAddr::V4(Ipv4Addr::LOCALHOST),
+                       local_port: open_port,
+                       remote_addr: IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)),
+                       remote_port: 0,
+                       state: TcpState::Listen,
+                   }));
+        assert_eq!(sock.associated_pids, vec![pid]);
     }
 
     #[test]

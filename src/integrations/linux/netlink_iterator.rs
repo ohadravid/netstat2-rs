@@ -1,10 +1,10 @@
 use crate::integrations::linux::ffi::*;
 use crate::types::*;
-use crate::utils::*;
 use libc::*;
 use std;
 use std::mem::size_of;
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
+use std::io;
 
 const TCPF_ALL: __u32 = 0xFFF;
 const SOCKET_BUFFER_SIZE: size_t = 8192;
@@ -51,16 +51,14 @@ impl Iterator for NetlinkIterator {
                     if (&*self.nlh).nlmsg_type == NLMSG_ERROR as u16 {
                         // TODO: parse error code from msg properly
                         // https://www.infradead.org/~tgr/libnl/doc/core.html#core_errmsg
-                        return Some(Result::Err(Error::InternalError(
-                            "Found netlink message with nlmsg_type == NLMSG_ERROR.",
-                        )));
+                        return Some(Result::Err(Error::NetLinkError));
                     }
                     let diag_msg = NLMSG_DATA!(self.nlh) as *const inet_diag_msg;
                     let rtalen =
                         (&*self.nlh).nlmsg_len as usize - NLMSG_LENGTH!(size_of::<inet_diag_msg>());
                     let socket_info = parse_diag_msg(&*diag_msg, self.protocol, rtalen);
                     self.nlh = NLMSG_NEXT!(self.nlh, self.numbytes);
-                    return Some(Ok(socket_info));
+                    return Some(socket_info);
                 }
             }
         }
@@ -70,7 +68,7 @@ impl Iterator for NetlinkIterator {
 impl Drop for NetlinkIterator {
     fn drop(&mut self) {
         unsafe {
-            try_close(self.socket);
+            let _ = try_close(self.socket);
         }
     }
 }
@@ -115,20 +113,18 @@ unsafe fn send_diag_msg(sockfd: c_int, family: __u8, protocol: __u8) -> Result<(
         msg_flags: 0,
     };
     match sendmsg(sockfd, &msg, 0) {
-        -1 => Result::Err(Error::ForeignError {
-            api_name: "sendmsg",
-            err_code: get_raw_os_error(),
-        }),
+        -1 => Result::Err(Error::OsError(io::Error::last_os_error())),
         _ => Result::Ok(()),
     }
 }
 
-unsafe fn parse_diag_msg(diag_msg: &inet_diag_msg, protocol: __u8, rtalen: usize) -> SocketInfo {
+unsafe fn parse_diag_msg(diag_msg: &inet_diag_msg, protocol: __u8, rtalen: usize) -> Result<SocketInfo, Error> {
     let src_port = u16::from_be(diag_msg.id.sport);
     let dst_port = u16::from_be(diag_msg.id.dport);
-    let src_ip = parse_ip(diag_msg.family, &diag_msg.id.src);
-    let dst_ip = parse_ip(diag_msg.family, &diag_msg.id.dst);
-    match protocol as i32 {
+    let src_ip = parse_ip(diag_msg.family, &diag_msg.id.src)?;
+    let dst_ip = parse_ip(diag_msg.family, &diag_msg.id.dst)?;
+
+    let sock_info = match protocol as i32 {
         IPPROTO_TCP => SocketInfo {
             protocol_socket_info: ProtocolSocketInfo::Tcp(TcpSocketInfo {
                 local_addr: src_ip,
@@ -148,20 +144,24 @@ unsafe fn parse_diag_msg(diag_msg: &inet_diag_msg, protocol: __u8, rtalen: usize
             associated_pids: Vec::with_capacity(0),
             inode: diag_msg.inode,
         },
-        _ => panic!("Unknown protocol!"),
-    }
+        _ => return Err(Error::UnknownProtocol(protocol)),
+    };
+
+    Ok(sock_info)
 }
 
-unsafe fn parse_ip(family: u8, bytes: &[__be32; 4]) -> IpAddr {
-    match family as i32 {
+unsafe fn parse_ip(family: u8, bytes: &[__be32; 4]) -> Result<IpAddr, Error> {
+    let addr = match family as i32 {
         AF_INET => IpAddr::V4(Ipv4Addr::from(
             *(&bytes[0] as *const __be32 as *const [u8; 4]),
         )),
         AF_INET6 => IpAddr::V6(Ipv6Addr::from(
             *(bytes as *const [__be32; 4] as *const u8 as *const [u8; 16]),
         )),
-        _ => panic!("Unknown family!"),
-    }
+        _ => return Err(Error::UnsupportedSocketFamily(family as u32)),
+    };
+
+    Ok(addr)
 }
 
 unsafe fn parse_tcp_state(diag_msg: &inet_diag_msg, rtalen: usize) -> TcpState {
@@ -179,10 +179,7 @@ unsafe fn parse_tcp_state(diag_msg: &inet_diag_msg, rtalen: usize) -> TcpState {
 
 unsafe fn try_close(sockfd: c_int) -> Result<(), Error> {
     match close(sockfd) {
-        -1 => Result::Err(Error::ForeignError {
-            api_name: "close",
-            err_code: get_raw_os_error(),
-        }),
+        -1 => Result::Err(Error::OsError(io::Error::last_os_error())),
         _ => Result::Ok(()),
     }
 }

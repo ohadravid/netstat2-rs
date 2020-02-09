@@ -15,6 +15,7 @@ pub enum TcpState {
     LastAck,
     TimeWait,
     DeleteTcb,
+    Unknown,
 }
 
 impl fmt::Display for TcpState {
@@ -35,6 +36,7 @@ impl fmt::Display for TcpState {
                 TcpState::LastAck => "LAST_ACK",
                 TcpState::TimeWait => "TIME_WAIT",
                 TcpState::DeleteTcb => "DELETE_TCB",
+                TcpState::Unknown => "__UNKNOWN",
             }
         )
     }
