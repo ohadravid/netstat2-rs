@@ -1,27 +1,26 @@
 use crate::integrations::windows::ffi::*;
-use crate::types::*;
 use crate::types::error::*;
-use std;
+use crate::types::*;
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
 
 pub trait SocketTable {
     fn get_table() -> Result<Vec<u8>, Error>;
-    fn get_rows_count(table: &Vec<u8>) -> usize;
-    fn get_socket_info(table: &Vec<u8>, index: usize) -> SocketInfo;
+    fn get_rows_count(table: &[u8]) -> usize;
+    fn get_socket_info(table: &[u8], index: usize) -> SocketInfo;
 }
 
 impl SocketTable for MIB_TCPTABLE_OWNER_PID {
     fn get_table() -> Result<Vec<u8>, Error> {
         get_extended_tcp_table(AF_INET)
     }
-    fn get_rows_count(table: &Vec<u8>) -> usize {
+    fn get_rows_count(table: &[u8]) -> usize {
         let table = unsafe { &*(table.as_ptr() as *const MIB_TCPTABLE_OWNER_PID) };
         table.rows_count as usize
     }
-    fn get_socket_info(table: &Vec<u8>, index: usize) -> SocketInfo {
+    fn get_socket_info(table: &[u8], index: usize) -> SocketInfo {
         let table = unsafe { &*(table.as_ptr() as *const MIB_TCPTABLE_OWNER_PID) };
         let rows_ptr = &table.rows[0] as *const MIB_TCPROW_OWNER_PID;
-        let row = unsafe { &*rows_ptr.offset(index as isize) };
+        let row = unsafe { &*rows_ptr.add(index) };
         SocketInfo {
             protocol_socket_info: ProtocolSocketInfo::Tcp(TcpSocketInfo {
                 local_addr: IpAddr::V4(Ipv4Addr::from(u32::from_be(row.local_addr))),
@@ -39,14 +38,14 @@ impl SocketTable for MIB_TCP6TABLE_OWNER_PID {
     fn get_table() -> Result<Vec<u8>, Error> {
         get_extended_tcp_table(AF_INET6)
     }
-    fn get_rows_count(table: &Vec<u8>) -> usize {
+    fn get_rows_count(table: &[u8]) -> usize {
         let table = unsafe { &*(table.as_ptr() as *const MIB_TCP6TABLE_OWNER_PID) };
         table.rows_count as usize
     }
-    fn get_socket_info(table: &Vec<u8>, index: usize) -> SocketInfo {
+    fn get_socket_info(table: &[u8], index: usize) -> SocketInfo {
         let table = unsafe { &*(table.as_ptr() as *const MIB_TCP6TABLE_OWNER_PID) };
         let rows_ptr = &table.rows[0] as *const MIB_TCP6ROW_OWNER_PID;
-        let row = unsafe { &*rows_ptr.offset(index as isize) };
+        let row = unsafe { &*rows_ptr.add(index) };
         SocketInfo {
             protocol_socket_info: ProtocolSocketInfo::Tcp(TcpSocketInfo {
                 local_addr: IpAddr::V6(Ipv6Addr::from(row.local_addr)),
@@ -66,14 +65,14 @@ impl SocketTable for MIB_UDPTABLE_OWNER_PID {
     fn get_table() -> Result<Vec<u8>, Error> {
         get_extended_udp_table(AF_INET)
     }
-    fn get_rows_count(table: &Vec<u8>) -> usize {
+    fn get_rows_count(table: &[u8]) -> usize {
         let table = unsafe { &*(table.as_ptr() as *const MIB_UDPTABLE_OWNER_PID) };
         table.rows_count as usize
     }
-    fn get_socket_info(table: &Vec<u8>, index: usize) -> SocketInfo {
+    fn get_socket_info(table: &[u8], index: usize) -> SocketInfo {
         let table = unsafe { &*(table.as_ptr() as *const MIB_UDPTABLE_OWNER_PID) };
         let rows_ptr = &table.rows[0] as *const MIB_UDPROW_OWNER_PID;
-        let row = unsafe { &*rows_ptr.offset(index as isize) };
+        let row = unsafe { &*rows_ptr.add(index) };
         SocketInfo {
             protocol_socket_info: ProtocolSocketInfo::Udp(UdpSocketInfo {
                 local_addr: IpAddr::V4(Ipv4Addr::from(u32::from_be(row.local_addr))),
@@ -88,14 +87,14 @@ impl SocketTable for MIB_UDP6TABLE_OWNER_PID {
     fn get_table() -> Result<Vec<u8>, Error> {
         get_extended_udp_table(AF_INET6)
     }
-    fn get_rows_count(table: &Vec<u8>) -> usize {
+    fn get_rows_count(table: &[u8]) -> usize {
         let table = unsafe { &*(table.as_ptr() as *const MIB_UDP6TABLE_OWNER_PID) };
         table.rows_count as usize
     }
-    fn get_socket_info(table: &Vec<u8>, index: usize) -> SocketInfo {
+    fn get_socket_info(table: &[u8], index: usize) -> SocketInfo {
         let table = unsafe { &*(table.as_ptr() as *const MIB_UDP6TABLE_OWNER_PID) };
         let rows_ptr = &table.rows[0] as *const MIB_UDP6ROW_OWNER_PID;
-        let row = unsafe { &*rows_ptr.offset(index as isize) };
+        let row = unsafe { &*rows_ptr.add(index) };
         SocketInfo {
             protocol_socket_info: ProtocolSocketInfo::Udp(UdpSocketInfo {
                 local_addr: IpAddr::V6(Ipv6Addr::from(row.local_addr)),

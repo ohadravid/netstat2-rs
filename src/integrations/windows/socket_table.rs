@@ -1,22 +1,21 @@
 use crate::integrations::windows::ffi::*;
 use crate::integrations::windows::socket_table_extended::SocketTable;
-use crate::types::*;
 use crate::types::error::*;
-use std;
+use crate::types::*;
 use std::net::{IpAddr, Ipv4Addr};
 
 impl SocketTable for MIB_TCPTABLE {
     fn get_table() -> Result<Vec<u8>, Error> {
         get_tcp_table(AF_INET)
     }
-    fn get_rows_count(table: &Vec<u8>) -> usize {
+    fn get_rows_count(table: &[u8]) -> usize {
         let table = unsafe { &*(table.as_ptr() as *const MIB_TCPTABLE) };
         table.rows_count as usize
     }
-    fn get_socket_info(table: &Vec<u8>, index: usize) -> SocketInfo {
+    fn get_socket_info(table: &[u8], index: usize) -> SocketInfo {
         let table = unsafe { &*(table.as_ptr() as *const MIB_TCPTABLE) };
         let rows_ptr = &table.rows[0] as *const MIB_TCPROW;
-        let row = unsafe { &*rows_ptr.offset(index as isize) };
+        let row = unsafe { &*rows_ptr.add(index) };
         SocketInfo {
             protocol_socket_info: ProtocolSocketInfo::Tcp(TcpSocketInfo {
                 local_addr: IpAddr::V4(Ipv4Addr::from(u32::from_be(row.local_addr))),
@@ -34,14 +33,14 @@ impl SocketTable for MIB_UDPTABLE {
     fn get_table() -> Result<Vec<u8>, Error> {
         get_udp_table(AF_INET)
     }
-    fn get_rows_count(table: &Vec<u8>) -> usize {
+    fn get_rows_count(table: &[u8]) -> usize {
         let table = unsafe { &*(table.as_ptr() as *const MIB_UDPTABLE) };
         table.rows_count as usize
     }
-    fn get_socket_info(table: &Vec<u8>, index: usize) -> SocketInfo {
+    fn get_socket_info(table: &[u8], index: usize) -> SocketInfo {
         let table = unsafe { &*(table.as_ptr() as *const MIB_UDPTABLE) };
         let rows_ptr = &table.rows[0] as *const MIB_UDPROW;
-        let row = unsafe { &*rows_ptr.offset(index as isize) };
+        let row = unsafe { &*rows_ptr.add(index) };
         SocketInfo {
             protocol_socket_info: ProtocolSocketInfo::Udp(UdpSocketInfo {
                 local_addr: IpAddr::V4(Ipv4Addr::from(u32::from_be(row.local_addr))),

@@ -1,6 +1,6 @@
 use crate::integrations::linux::ffi::*;
-use crate::types::*;
 use crate::types::error::*;
+use crate::types::*;
 use libc::*;
 use std;
 use std::io;
@@ -90,8 +90,8 @@ unsafe fn send_diag_msg(sockfd: c_int, family: __u8, protocol: __u8) -> Result<(
     sa.nl_pid = 0;
     sa.nl_groups = 0;
     let mut conn_req = inet_diag_req_v2 {
-        family: family,
-        protocol: protocol,
+        family,
+        protocol,
         ext: 1 << (INET_DIAG_INFO - 1),
         pad: 0,
         states: TCPF_ALL,

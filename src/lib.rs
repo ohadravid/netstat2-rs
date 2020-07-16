@@ -74,7 +74,7 @@ mod tests {
 
         let sock_info = get_sockets_info(af_flags, proto_flags).unwrap();
 
-        assert!(sock_info.len() > 0);
+        assert!(!sock_info.is_empty());
 
         let sock = sock_info
             .into_iter()
@@ -106,7 +106,7 @@ mod tests {
 
         let sock_info = get_sockets_info(af_flags, proto_flags).unwrap();
 
-        assert!(sock_info.len() > 0);
+        assert!(!sock_info.is_empty());
 
         let sock = sock_info
             .into_iter()
@@ -126,10 +126,10 @@ mod tests {
     #[test]
     fn result_is_ok_for_any_flags() {
         let af_flags_combs = (0..AddressFamilyFlags::all().bits() + 1)
-            .filter_map(|x| AddressFamilyFlags::from_bits(x))
+            .filter_map(AddressFamilyFlags::from_bits)
             .collect::<Vec<AddressFamilyFlags>>();
         let proto_flags_combs = (0..ProtocolFlags::all().bits() + 1)
-            .filter_map(|x| ProtocolFlags::from_bits(x))
+            .filter_map(ProtocolFlags::from_bits)
             .collect::<Vec<ProtocolFlags>>();
         for af_flags in af_flags_combs.iter() {
             for proto_flags in proto_flags_combs.iter() {
@@ -142,6 +142,6 @@ mod tests {
     fn result_is_empty_for_empty_flags() {
         let sockets_info =
             get_sockets_info(AddressFamilyFlags::empty(), ProtocolFlags::empty()).unwrap();
-        assert!(sockets_info.len() == 0);
+        assert!(sockets_info.is_empty());
     }
 }
