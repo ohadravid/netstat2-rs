@@ -17,32 +17,32 @@ mod tests {
         let table: Vec<_> = SocketTableIterator::new::<MIB_TCPTABLE_OWNER_PID>()
             .unwrap()
             .collect();
-        assert!(table.len() > 0);
+        assert!(!table.is_empty());
 
         let table: Vec<_> = SocketTableIterator::new::<MIB_UDPTABLE_OWNER_PID>()
             .unwrap()
             .collect();
-        assert!(table.len() > 0);
+        assert!(!table.is_empty());
 
         let table: Vec<_> = SocketTableIterator::new::<MIB_TCP6TABLE_OWNER_PID>()
             .unwrap()
             .collect();
-        assert!(table.len() > 0);
+        assert!(!table.is_empty());
 
         let table: Vec<_> = SocketTableIterator::new::<MIB_UDP6TABLE_OWNER_PID>()
             .unwrap()
             .collect();
-        assert!(table.len() > 0);
+        assert!(!table.is_empty());
 
         // Old API versions.
         let table: Vec<_> = SocketTableIterator::new::<MIB_TCPTABLE>()
             .unwrap()
             .collect();
-        assert!(table.len() > 0);
+        assert!(!table.is_empty());
 
         let table: Vec<_> = SocketTableIterator::new::<MIB_UDPTABLE>()
             .unwrap()
             .collect();
-        assert!(table.len() > 0);
+        assert!(!table.is_empty());
     }
 }

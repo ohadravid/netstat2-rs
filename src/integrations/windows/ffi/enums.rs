@@ -1,5 +1,4 @@
 use crate::integrations::windows::ffi::*;
-use std;
 
 pub type BOOL = std::os::raw::c_int;
 pub const FALSE: BOOL = 0;
