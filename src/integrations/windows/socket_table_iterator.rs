@@ -1,12 +1,12 @@
 use crate::integrations::windows::socket_table_extended::SocketTable;
-use crate::types::*;
 use crate::types::error::*;
+use crate::types::*;
 
 pub struct SocketTableIterator {
     table: Vec<u8>,
     rows_count: usize,
     current_row_index: usize,
-    info_getter: fn(&Vec<u8>, usize) -> SocketInfo,
+    info_getter: fn(&[u8], usize) -> SocketInfo,
 }
 
 impl SocketTableIterator {

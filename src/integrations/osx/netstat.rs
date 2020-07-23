@@ -1,15 +1,15 @@
 #![allow(unused)]
 
-use byteorder::{ByteOrder, NetworkEndian};
-
-use enum_primitive_derive::Primitive;
-use num_traits::FromPrimitive;
 use std::fmt::{self, Display};
 use std::mem::MaybeUninit;
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
 use std::os::raw::{c_int, c_uint, c_void};
 use std::ptr;
 use std::{io, mem};
+
+use byteorder::{ByteOrder, NetworkEndian};
+use num_derive::FromPrimitive;
+use num_traits::FromPrimitive;
 
 use crate::integrations::osx::ffi::libproc::*;
 use crate::types::error::Error;
@@ -36,7 +36,7 @@ impl Default for ProcFDInfo {
 }
 
 #[repr(C)]
-#[derive(Debug, Copy, Clone, PartialOrd, PartialEq, Primitive)]
+#[derive(Debug, Copy, Clone, PartialOrd, PartialEq, FromPrimitive)]
 pub enum ProcType {
     ProcAllPIDS = 1,
     ProcPGRPOnly = 2,
@@ -47,7 +47,7 @@ pub enum ProcType {
 }
 
 #[repr(C)]
-#[derive(Debug, Copy, Clone, PartialOrd, PartialEq, Primitive)]
+#[derive(Debug, Copy, Clone, PartialOrd, PartialEq, FromPrimitive)]
 pub enum ProcFDType {
     Atalk = 0,
     Vnode = 1,
@@ -62,7 +62,7 @@ pub enum ProcFDType {
 
 // Adapter from proc_info.h
 #[repr(C)]
-#[derive(Debug, Copy, Clone, PartialOrd, PartialEq, Primitive)]
+#[derive(Debug, Copy, Clone, PartialOrd, PartialEq, FromPrimitive)]
 pub enum SockInfo {
     Generic = 0,
     In = 1,
@@ -74,7 +74,7 @@ pub enum SockInfo {
 }
 
 #[repr(C)]
-#[derive(Debug, Copy, Clone, PartialOrd, PartialEq, Primitive)]
+#[derive(Debug, Copy, Clone, PartialOrd, PartialEq, FromPrimitive)]
 pub enum SocketFamily {
     AF_UNSPEC = 0,
     /* unspecified */
@@ -174,7 +174,7 @@ pub enum PidInfoFlavor {
 }
 
 #[repr(C)]
-#[derive(Debug, Copy, Clone, PartialOrd, PartialEq, Primitive)]
+#[derive(Debug, Copy, Clone, PartialOrd, PartialEq, FromPrimitive)]
 pub enum TCPSocketState {
     CLOSED = 0,
     /* closed */
