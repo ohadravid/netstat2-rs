@@ -1,7 +1,7 @@
 use crate::integrations::windows::ffi::*;
 use crate::integrations::windows::socket_table_iterator::SocketTableIterator;
-use crate::types::*;
 use crate::types::error::*;
+use crate::types::*;
 
 /// Iterate through sockets information.
 pub fn iterate_sockets_info(
