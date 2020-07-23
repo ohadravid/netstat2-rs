@@ -8,7 +8,7 @@ pub struct SocketInfo {
     pub protocol_socket_info: ProtocolSocketInfo,
     /// Identifiers of processes associated with this socket.
     pub associated_pids: Vec<u32>,
-    #[cfg(target_os = "linux")]
+    #[cfg(any(target_os = "linux", target_os = "android"))]
     pub inode: u32,
 }
 

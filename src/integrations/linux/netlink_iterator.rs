@@ -32,6 +32,11 @@ pub struct NetlinkIterator {
 impl NetlinkIterator {
     pub unsafe fn new(family: __u8, protocol: __u8) -> Result<Self, Error> {
         let socket = socket(AF_NETLINK as i32, SOCK_DGRAM, NETLINK_INET_DIAG);
+
+        if socket == -1 {
+            return Result::Err(Error::OsError(io::Error::last_os_error()));
+        }
+
         send_diag_msg(socket, family, protocol)?;
         Ok(NetlinkIterator {
             protocol,

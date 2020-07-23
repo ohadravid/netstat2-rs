@@ -33,6 +33,7 @@
 //! # }
 //! ```
 #![allow(non_camel_case_types)]
+#![allow(unused_imports)]
 
 #[macro_use]
 extern crate bitflags;

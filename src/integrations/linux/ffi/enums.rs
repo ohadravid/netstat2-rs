@@ -1,4 +1,6 @@
 use libc::*;
+#[allow(unused_imports)]
+use crate::integrations::linux::ffi::types::*;
 
 /*
  * From "linux/sock_diag.h"
