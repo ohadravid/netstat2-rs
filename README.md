@@ -11,7 +11,7 @@ Provides unified interface and returns data structures which may have additional
 ```toml
 # Cargo.toml
 [dependencies]
-netstat2 = "0.8"
+netstat2 = "0.9"
 ```
 
 This is a fork based on the [netstat](https://crates.io/crates/netstat) crate by [ivxvm](https://github.com/ivxvm).
@@ -52,8 +52,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 - On Windows, this library library uses [GetExtendedTcpTable](https://docs.microsoft.com/en-us/windows/desktop/api/iphlpapi/nf-iphlpapi-getextendedtcptable) & [GetExtendedUdpTable](https://docs.microsoft.com/en-us/windows/desktop/api/iphlpapi/nf-iphlpapi-getextendedudptable) (iphlpapi), 
 with an option to use the older [GetTcpTable](https://docs.microsoft.com/en-us/windows/desktop/api/iphlpapi/nf-iphlpapi-gettcptable) & [GeUdpTable](https://docs.microsoft.com/en-us/windows/desktop/api/iphlpapi/nf-iphlpapi-getudptable).
-- On Linux, it uses [NETLINK_INET_DIAG](http://manpages.ubuntu.com/manpages/bionic/en/man7/sock_diag.7.html) protocol and performs pid lookup by traversing `procfs`.
-- On OS X, it uses [proc_pidfdinfo](https://opensource.apple.com/source/xnu/xnu-1504.7.4/bsd/kern/proc_info.c.auto.html).
+- On Linux and Android, it uses [NETLINK_INET_DIAG](http://manpages.ubuntu.com/manpages/bionic/en/man7/sock_diag.7.html) protocol and performs pid lookup by traversing `procfs`.
+- On macOS and iOS, it uses [proc_pidfdinfo](https://opensource.apple.com/source/xnu/xnu-1504.7.4/bsd/kern/proc_info.c.auto.html).
 
 ## License
 

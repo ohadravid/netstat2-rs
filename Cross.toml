@@ -3,5 +3,5 @@ passthrough = [
     "RUST_BACKTRACE",
     "RUST_LOG",
     "RUST_DEBUG",
-    "TRAVIS",
+    "CI",
 ]
