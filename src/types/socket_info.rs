@@ -9,7 +9,11 @@ pub struct SocketInfo {
     /// Identifiers of processes associated with this socket.
     pub associated_pids: Vec<u32>,
     #[cfg(any(target_os = "linux", target_os = "android"))]
+    /// Inode number of this socket.
     pub inode: u32,
+    #[cfg(any(target_os = "linux", target_os = "android"))]
+    /// Owner UID of this socket.
+    pub uid: u32,
 }
 
 /// Protocol-specific socket information.
