@@ -41,3 +41,21 @@ pub struct UdpSocketInfo {
     pub local_addr: IpAddr,
     pub local_port: u16,
 }
+
+impl SocketInfo {
+    /// Local address of this socket.
+    pub fn local_addr(&self) -> IpAddr {
+        match &self.protocol_socket_info {
+            ProtocolSocketInfo::Tcp(s) => s.local_addr,
+            ProtocolSocketInfo::Udp(s) => s.local_addr,
+        }
+    }
+
+    /// Local port of this socket.
+    pub fn local_port(&self) -> u16 {
+        match &self.protocol_socket_info {
+            ProtocolSocketInfo::Tcp(s) => s.local_port,
+            ProtocolSocketInfo::Udp(s) => s.local_port,
+        }
+    }
+}
