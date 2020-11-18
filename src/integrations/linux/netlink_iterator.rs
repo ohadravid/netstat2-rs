@@ -153,6 +153,7 @@ unsafe fn parse_diag_msg(
             }),
             associated_pids: Vec::with_capacity(0),
             inode: diag_msg.inode,
+            uid: diag_msg.uid,
         },
         IPPROTO_UDP => SocketInfo {
             protocol_socket_info: ProtocolSocketInfo::Udp(UdpSocketInfo {
@@ -161,6 +162,7 @@ unsafe fn parse_diag_msg(
             }),
             associated_pids: Vec::with_capacity(0),
             inode: diag_msg.inode,
+            uid: diag_msg.uid,
         },
         _ => return Err(Error::UnknownProtocol(protocol)),
     };
