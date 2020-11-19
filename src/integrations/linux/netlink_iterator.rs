@@ -1,3 +1,4 @@
+use super::filter::*;
 use crate::integrations::linux::ffi::*;
 use crate::types::error::*;
 use crate::types::*;
@@ -30,14 +31,18 @@ pub struct NetlinkIterator {
 }
 
 impl NetlinkIterator {
-    pub unsafe fn new(family: __u8, protocol: __u8) -> Result<Self, Error> {
+    pub unsafe fn new(
+        family: __u8,
+        protocol: __u8,
+        filters: &mut [inet_diag_bc_op],
+    ) -> Result<Self, Error> {
         let socket = socket(AF_NETLINK as i32, SOCK_DGRAM, NETLINK_INET_DIAG);
 
         if socket == -1 {
             return Result::Err(Error::OsError(io::Error::last_os_error()));
         }
 
-        send_diag_msg(socket, family, protocol)?;
+        send_diag_msg(socket, family, protocol, filters)?;
         Ok(NetlinkIterator {
             protocol,
             socket,
@@ -89,7 +94,12 @@ impl Drop for NetlinkIterator {
     }
 }
 
-unsafe fn send_diag_msg(sockfd: c_int, family: __u8, protocol: __u8) -> Result<(), Error> {
+unsafe fn send_diag_msg(
+    sockfd: c_int,
+    family: __u8,
+    protocol: __u8,
+    filters: &mut [inet_diag_bc_op],
+) -> Result<(), Error> {
     let mut sa: sockaddr_nl = std::mem::zeroed();
     sa.nl_family = AF_NETLINK as sa_family_t;
     sa.nl_pid = 0;
@@ -109,6 +119,14 @@ unsafe fn send_diag_msg(sockfd: c_int, family: __u8, protocol: __u8) -> Result<(
         nlmsg_seq: 0,
         nlmsg_pid: 0,
     };
+
+    let filter_len = filters.len() * size_of::<inet_diag_bc_op>();
+
+    let mut rta = rtattr {
+        rta_type: INET_DIAG_REQ_BYTECODE,
+        rta_len: RTA_LENGTH!(filter_len) as u16,
+    };
+
     let mut iov = [
         iovec {
             iov_base: &mut nlh as *mut _ as *mut c_void,
@@ -118,13 +136,25 @@ unsafe fn send_diag_msg(sockfd: c_int, family: __u8, protocol: __u8) -> Result<(
             iov_base: &mut conn_req as *mut _ as *mut c_void,
             iov_len: size_of::<inet_diag_req_v2>() as size_t,
         },
+        iovec {
+            iov_base: &mut rta as *mut _ as *mut c_void,
+            iov_len: size_of::<rtattr>() as size_t,
+        },
+        iovec {
+            iov_base: filters.as_mut_ptr() as *mut _ as *mut c_void,
+            iov_len: filter_len as size_t,
+        },
     ];
+
+    if !filters.is_empty() {
+        nlh.nlmsg_len += rta.rta_len as u32;
+    }
 
     let mut msg: msghdr = std::mem::zeroed();
     msg.msg_name = &mut sa as *mut _ as *mut _;
     msg.msg_namelen = size_of::<sockaddr_nl>() as c_uint;
     msg.msg_iov = &mut iov[0];
-    msg.msg_iovlen = 2;
+    msg.msg_iovlen = if filters.is_empty() { 2 } else { 4 };
 
     match sendmsg(sockfd, &msg, 0) {
         -1 => Result::Err(Error::OsError(io::Error::last_os_error())),
