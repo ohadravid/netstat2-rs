@@ -1,4 +1,5 @@
 use crate::integrations::linux::ffi::types::*;
+use crate::integrations::linux::ffi::FilterOpRaw;
 use libc::*;
 
 /*
@@ -63,6 +64,14 @@ pub struct inet_diag_req_v2 {
     pub pad: __u8,
     pub states: __u32,
     pub id: inet_diag_sockid,
+}
+
+#[repr(C)]
+#[derive(Copy, Clone, Debug)]
+pub struct inet_diag_bc_op {
+    pub code: FilterOpRaw,
+    pub yes: __u8,
+    pub no: __u16,
 }
 
 /*
