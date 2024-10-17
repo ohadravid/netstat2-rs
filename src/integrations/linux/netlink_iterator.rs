@@ -1,4 +1,4 @@
-use crate::integrations::linux::ffi::*;
+use crate::integrations::linux::ffi::{tcp_info, *};
 use crate::types::error::*;
 use crate::types::*;
 use libc::*;
