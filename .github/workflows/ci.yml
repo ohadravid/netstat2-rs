@@ -23,11 +23,11 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: "1.69.0"
+          toolchain: "1.77.0"
           default: true
 
       - run: cargo test
-      
+
       - name: run cross build for Andriod (on Linux)
         run: |
           cargo install cross
