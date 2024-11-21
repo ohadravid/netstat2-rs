@@ -23,7 +23,7 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: "1.69.0"
+          toolchain: "1.82.0"
           default: true
 
       - run: cargo test
@@ -37,5 +37,6 @@ jobs:
       - name: run cross build for iOS (on macOS)
         run: |
           cargo install cross
+          rustup target add aarch64-apple-ios
           cross build --target aarch64-apple-ios
         if: matrix.os == 'macos-latest'

@@ -44,23 +44,14 @@ mod types;
 pub use crate::integrations::*;
 pub use crate::types::*;
 
-// Cannot use `cfg(test)` here since `rustdoc` won't look at it.
-#[cfg(debug_assertions)]
-mod test_readme {
-    macro_rules! calculated_doc {
-        ($doc:expr, $id:ident) => {
-            #[doc = $doc]
-            enum $id {}
-        }
-    }
-
-    calculated_doc!(include_str!("../README.md"), _DoctestReadme);
-}
+#[doc = include_str!("../README.md")]
+#[cfg(doctest)]
+pub struct ReadmeDoctests;
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::net::{IpAddr, Ipv4Addr, TcpListener, UdpSocket};
+    use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, TcpListener, TcpStream, UdpSocket};
     use std::process;
 
     #[test]
@@ -79,7 +70,7 @@ mod tests {
 
         let sock = sock_info
             .into_iter()
-            .find(|s| s.associated_pids.contains(&pid))
+            .find(|s| s.associated_pids.contains(&pid) && s.local_port() == open_port)
             .unwrap();
 
         assert_eq!(
@@ -88,6 +79,38 @@ mod tests {
                 local_addr: IpAddr::V4(Ipv4Addr::LOCALHOST),
                 local_port: open_port,
                 remote_addr: IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)),
+                remote_port: 0,
+                state: TcpState::Listen,
+            })
+        );
+        assert_eq!(sock.associated_pids, vec![pid]);
+    }
+
+    #[test]
+    fn listening_tcp_socket_ipv6_is_found() {
+        let listener = TcpListener::bind("::1:0").unwrap();
+
+        let open_port = listener.local_addr().unwrap().port();
+        let pid = process::id();
+
+        let af_flags = AddressFamilyFlags::all();
+        let proto_flags = ProtocolFlags::TCP;
+
+        let sock_info = get_sockets_info(af_flags, proto_flags).unwrap();
+
+        assert!(!sock_info.is_empty());
+
+        let sock = sock_info
+            .into_iter()
+            .find(|s| s.associated_pids.contains(&pid) && s.local_port() == open_port)
+            .unwrap();
+
+        assert_eq!(
+            sock.protocol_socket_info,
+            ProtocolSocketInfo::Tcp(TcpSocketInfo {
+                local_addr: IpAddr::V6(Ipv6Addr::LOCALHOST),
+                local_port: open_port,
+                remote_addr: IpAddr::V6(Ipv6Addr::UNSPECIFIED),
                 remote_port: 0,
                 state: TcpState::Listen,
             })
@@ -111,7 +134,7 @@ mod tests {
 
         let sock = sock_info
             .into_iter()
-            .find(|s| s.associated_pids.contains(&pid))
+            .find(|s| s.associated_pids.contains(&pid) && s.local_port() == open_port)
             .unwrap();
 
         assert_eq!(
@@ -124,6 +147,43 @@ mod tests {
         assert_eq!(sock.associated_pids, vec![pid]);
     }
 
+    #[test]
+    fn listening_all_tcp_socket_is_found() {
+        let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+        let _ipv6_listener = TcpListener::bind("::1:0").unwrap();
+        let _udp_listener = UdpSocket::bind("127.0.0.1:0").unwrap();
+
+
+        let open_port = listener.local_addr().unwrap().port();
+
+        let _connection = TcpStream::connect(listener.local_addr().unwrap()).unwrap();
+        let pid = process::id();
+
+        let af_flags = AddressFamilyFlags::all();
+        let proto_flags = ProtocolFlags::TCP | ProtocolFlags::UDP;
+
+        let sock_info = get_sockets_info(af_flags, proto_flags).unwrap();
+
+        assert!(!sock_info.is_empty());
+
+        let sock = sock_info
+            .into_iter()
+            .find(|s| s.associated_pids.contains(&pid) && s.local_port() == open_port)
+            .unwrap();
+
+        assert_eq!(
+            sock.protocol_socket_info,
+            ProtocolSocketInfo::Tcp(TcpSocketInfo {
+                local_addr: IpAddr::V4(Ipv4Addr::LOCALHOST),
+                local_port: open_port,
+                remote_addr: IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)),
+                remote_port: 0,
+                state: TcpState::Listen,
+            })
+        );
+        assert_eq!(sock.associated_pids, vec![pid]);
+    }
+    
     #[test]
     fn result_is_ok_for_any_flags() {
         let af_flags_combs = (0..AddressFamilyFlags::all().bits() + 1)

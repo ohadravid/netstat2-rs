@@ -11,7 +11,7 @@ use byteorder::{ByteOrder, NetworkEndian};
 use num_derive::FromPrimitive;
 use num_traits::FromPrimitive;
 
-use crate::integrations::osx::ffi::libproc::*;
+use crate::integrations::osx::libproc_bindings::*;
 use crate::types::error::Error;
 use crate::types::{AddressFamilyFlags, ProtocolFlags};
 use crate::{ProtocolSocketInfo, SocketInfo, TcpSocketInfo, TcpState, UdpSocketInfo};
