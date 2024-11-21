@@ -1,4 +1,7 @@
 use crate::integrations::linux::ffi::*;
+use crate::integrations::linux::linux_bindings::{
+    __be32, inet_diag_msg, inet_diag_req_v2, rtattr, nlmsghdr, INET_DIAG_INFO, SOCK_DIAG_BY_FAMILY,
+};
 use crate::types::error::*;
 use crate::types::*;
 use libc::*;
@@ -7,15 +10,6 @@ use std::io;
 use std::mem::size_of;
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
 
-#[cfg(target_env = "musl")]
-#[repr(C)]
-pub struct nlmsghdr {
-    pub nlmsg_len: u32,
-    pub nlmsg_type: u16,
-    pub nlmsg_flags: u16,
-    pub nlmsg_seq: u32,
-    pub nlmsg_pid: u32,
-}
 
 const TCPF_ALL: __u32 = 0xFFF;
 const SOCKET_BUFFER_SIZE: size_t = 8192;
@@ -95,16 +89,16 @@ unsafe fn send_diag_msg(sockfd: c_int, family: __u8, protocol: __u8) -> Result<(
     sa.nl_pid = 0;
     sa.nl_groups = 0;
     let mut conn_req = inet_diag_req_v2 {
-        family,
-        protocol,
-        ext: 1 << (INET_DIAG_INFO - 1),
+        sdiag_family: family,
+        sdiag_protocol: protocol,
+        idiag_ext: 1 << (INET_DIAG_INFO - 1),
         pad: 0,
-        states: TCPF_ALL,
-        id: Default::default(),
+        idiag_states: TCPF_ALL,
+        id: std::mem::zeroed(),
     };
     let mut nlh = nlmsghdr {
         nlmsg_len: NLMSG_LENGTH!(size_of::<inet_diag_req_v2>()) as __u32,
-        nlmsg_type: SOCK_DIAG_BY_FAMILY,
+        nlmsg_type: SOCK_DIAG_BY_FAMILY as _,
         nlmsg_flags: (NLM_F_DUMP | NLM_F_REQUEST) as u16,
         nlmsg_seq: 0,
         nlmsg_pid: 0,
@@ -137,10 +131,10 @@ unsafe fn parse_diag_msg(
     protocol: __u8,
     rtalen: usize,
 ) -> Result<SocketInfo, Error> {
-    let src_port = u16::from_be(diag_msg.id.sport);
-    let dst_port = u16::from_be(diag_msg.id.dport);
-    let src_ip = parse_ip(diag_msg.family, &diag_msg.id.src)?;
-    let dst_ip = parse_ip(diag_msg.family, &diag_msg.id.dst)?;
+    let src_port = u16::from_be(diag_msg.id.idiag_sport);
+    let dst_port = u16::from_be(diag_msg.id.idiag_dport);
+    let src_ip = parse_ip(diag_msg.idiag_family, &diag_msg.id.idiag_src)?;
+    let dst_ip = parse_ip(diag_msg.idiag_family, &diag_msg.id.idiag_dst)?;
 
     let sock_info = match protocol as i32 {
         IPPROTO_TCP => SocketInfo {
@@ -152,8 +146,8 @@ unsafe fn parse_diag_msg(
                 state: parse_tcp_state(diag_msg, rtalen),
             }),
             associated_pids: Vec::with_capacity(0),
-            inode: diag_msg.inode,
-            uid: diag_msg.uid,
+            inode: diag_msg.idiag_inode,
+            uid: diag_msg.idiag_uid,
         },
         IPPROTO_UDP => SocketInfo {
             protocol_socket_info: ProtocolSocketInfo::Udp(UdpSocketInfo {
@@ -161,8 +155,8 @@ unsafe fn parse_diag_msg(
                 local_port: src_port,
             }),
             associated_pids: Vec::with_capacity(0),
-            inode: diag_msg.inode,
-            uid: diag_msg.uid,
+            inode: diag_msg.idiag_inode,
+            uid: diag_msg.idiag_uid,
         },
         _ => return Err(Error::UnknownProtocol(protocol)),
     };
@@ -190,7 +184,7 @@ unsafe fn parse_tcp_state(diag_msg: &inet_diag_msg, rtalen: usize) -> TcpState {
     while RTA_OK!(attr, len) {
         if (&*attr).rta_type == INET_DIAG_INFO as u16 {
             let tcpi = &*(RTA_DATA!(attr) as *const tcp_info);
-            return TcpState::from(tcpi.state);
+            return TcpState::from(tcpi.tcpi_state);
         }
         attr = RTA_NEXT!(attr, len);
     }

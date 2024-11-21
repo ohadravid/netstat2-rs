@@ -2,7 +2,6 @@
 #[allow(non_camel_case_types)]
 #[allow(non_snake_case)]
 #[allow(unused)]
-#[cfg(target_os = "macos")]
 mod libproc_bindings {
     include!(concat!(env!("OUT_DIR"), "/libproc_bindings.rs"));
 }
