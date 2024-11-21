@@ -37,5 +37,6 @@ jobs:
       - name: run cross build for iOS (on macOS)
         run: |
           cargo install cross
+          rustup target add aarch64-apple-ios
           cross build --target aarch64-apple-ios
         if: matrix.os == 'macos-latest'
