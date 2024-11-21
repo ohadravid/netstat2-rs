@@ -2,6 +2,7 @@ use libc::*;
 use std;
 use std::io;
 use std::mem::size_of;
+use std::ptr::read_unaligned;
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
 use crate::integrations::linux::ffi::*;
 use crate::integrations::linux::linux_bindings::{
@@ -9,7 +10,6 @@ use crate::integrations::linux::linux_bindings::{
 };
 use crate::types::error::*;
 use crate::types::*;
-
 
 const TCPF_ALL: __u32 = 0xFFF;
 const SOCKET_BUFFER_SIZE: size_t = 8192;
@@ -183,7 +183,7 @@ unsafe fn parse_tcp_state(diag_msg: &inet_diag_msg, rtalen: usize) -> TcpState {
     let mut attr = (diag_msg as *const inet_diag_msg).offset(1) as *const rtattr;
     while RTA_OK!(attr, len) {
         if (&*attr).rta_type == INET_DIAG_INFO as u16 {
-            let tcpi = &*(RTA_DATA!(attr) as *const tcp_info);
+            let tcpi = read_unaligned(RTA_DATA!(attr) as *const tcp_info);
             return TcpState::from(tcpi.tcpi_state);
         }
         attr = RTA_NEXT!(attr, len);
