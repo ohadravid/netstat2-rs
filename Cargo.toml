@@ -15,8 +15,8 @@ Cross-platform library to retrieve network sockets information.
 
 [dependencies]
 libc = "0.2"
-bitflags = "1.0"
-thiserror = "1"
+bitflags = "2"
+thiserror = "2"
 
 [dev-dependencies]
 criterion = { version = "0.4" }
