@@ -1,14 +1,14 @@
-use crate::integrations::linux::ffi::*;
-use crate::integrations::linux::linux_bindings::{
-    __be32, inet_diag_msg, inet_diag_req_v2, rtattr, nlmsghdr, INET_DIAG_INFO, SOCK_DIAG_BY_FAMILY,
-};
-use crate::types::error::*;
-use crate::types::*;
 use libc::*;
 use std;
 use std::io;
 use std::mem::size_of;
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
+use crate::integrations::linux::ffi::*;
+use crate::integrations::linux::linux_bindings::{
+    __be32, inet_diag_msg, inet_diag_req_v2, rtattr, nlmsghdr, tcp_info, INET_DIAG_INFO, SOCK_DIAG_BY_FAMILY
+};
+use crate::types::error::*;
+use crate::types::*;
 
 
 const TCPF_ALL: __u32 = 0xFFF;

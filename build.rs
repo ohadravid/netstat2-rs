@@ -27,6 +27,7 @@ fn main() {
             #include <linux/inet_diag.h>
             #include <linux/rtnetlink.h>
             #include <linux/netlink.h>
+            #include <linux/tcp.h>
         "#)
         .layout_tests(false)
         .generate()
