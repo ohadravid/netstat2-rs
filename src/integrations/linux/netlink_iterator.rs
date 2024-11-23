@@ -1,199 +1,146 @@
-use libc::*;
+//! This implementation is based on the `examples/dump_ipv4.rs` from `https://github.com/rust-netlink/netlink-packet-sock-diag`.
+use crate::types::error::*;
+use crate::types::*;
 use std;
 use std::io;
 use std::mem::size_of;
-use std::ptr::read_unaligned;
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
-use crate::integrations::linux::ffi::*;
-use crate::integrations::linux::linux_bindings::{
-    __be32, inet_diag_msg, inet_diag_req_v2, rtattr, nlmsghdr, tcp_info, INET_DIAG_INFO, SOCK_DIAG_BY_FAMILY
-};
-use crate::types::error::*;
-use crate::types::*;
 
-const TCPF_ALL: __u32 = 0xFFF;
-const SOCKET_BUFFER_SIZE: size_t = 8192;
+use netlink_packet_core::{
+    NetlinkHeader, NetlinkMessage, NetlinkPayload, NLM_F_DUMP, NLM_F_REQUEST,
+};
+use netlink_packet_sock_diag::inet::InetResponse;
+use netlink_packet_sock_diag::{
+    constants::*,
+    inet::{ExtensionFlags, InetRequest, SocketId, StateFlags},
+    SockDiagMessage,
+};
+use netlink_sys::{protocols::NETLINK_SOCK_DIAG, Socket, SocketAddr};
+
+const SOCKET_BUFFER_SIZE: usize = 8192;
 
 pub struct NetlinkIterator {
-    protocol: __u8,
+    protocol: u8,
     recv_buf: [u8; SOCKET_BUFFER_SIZE],
-    socket: i32,
-    nlh: *const nlmsghdr,
-    numbytes: isize,
-    nlmsg_ok: bool,
+    socket: Socket,
+    offset: usize,
+    size: usize,
+    is_done: bool,
 }
 
 impl NetlinkIterator {
-    pub unsafe fn new(family: __u8, protocol: __u8) -> Result<Self, Error> {
-        let socket = socket(AF_NETLINK as i32, SOCK_DGRAM, NETLINK_INET_DIAG);
+    pub fn new(family: u8, protocol: u8) -> Result<Self, Error> {
+        let mut socket = Socket::new(NETLINK_SOCK_DIAG)?;
+        let _port_number = socket.bind_auto()?.port_number();
+        socket.connect(&SocketAddr::new(0, 0))?;
 
-        if socket == -1 {
-            return Result::Err(Error::OsError(io::Error::last_os_error()));
-        }
+        let mut nl_hdr = NetlinkHeader::default();
+        nl_hdr.flags = NLM_F_REQUEST | NLM_F_DUMP;
+        let mut packet = NetlinkMessage::new(
+            nl_hdr,
+            SockDiagMessage::InetRequest(InetRequest {
+                family,
+                protocol,
+                extensions: ExtensionFlags::empty(),
+                states: StateFlags::all(),
+                socket_id: SocketId::new_v4(),
+            })
+            .into(),
+        );
 
-        send_diag_msg(socket, family, protocol)?;
+        packet.finalize();
+
+        let mut buf = vec![0; packet.buffer_len()];
+        packet.serialize(&mut buf[..]);
+        socket.send(&buf[..], 0)?;
+
         Ok(NetlinkIterator {
             protocol,
             socket,
             recv_buf: [0u8; SOCKET_BUFFER_SIZE as usize],
-            nlh: std::ptr::null(),
-            numbytes: 0,
-            nlmsg_ok: false,
+            offset: 0,
+            size: 0,
+            is_done: false,
         })
     }
-}
 
-impl Iterator for NetlinkIterator {
-    type Item = Result<SocketInfo, Error>;
-    fn next(&mut self) -> Option<Self::Item> {
-        unsafe {
-            loop {
-                if !self.nlmsg_ok {
-                    let buf_ptr = &mut self.recv_buf[0] as *mut u8 as *mut c_void;
-                    self.numbytes = recv(self.socket, buf_ptr, SOCKET_BUFFER_SIZE, 0);
-                    self.nlh = buf_ptr as *const u8 as *const nlmsghdr;
-                }
-                self.nlmsg_ok = NLMSG_OK!(self.nlh, self.numbytes);
-                if self.nlmsg_ok {
-                    if (&*self.nlh).nlmsg_type == NLMSG_DONE as u16 {
-                        return None;
+    fn try_read_next_packet(&mut self) -> Result<Option<SocketInfo>, Error> {
+        if self.is_done {
+            return Ok(None);
+        }
+
+        loop {
+            if self.offset >= self.size {
+                self.size = self.socket.recv(&mut &mut self.recv_buf[..], 0)?;
+                self.offset = 0;
+            }
+
+            let bytes = &self.recv_buf[self.offset..self.size];
+
+            let rx_packet: NetlinkMessage<SockDiagMessage> =
+                match NetlinkMessage::deserialize(bytes) {
+                    Ok(rx_packet) => rx_packet,
+                    Err(e) => {
+                        // Avoid endless loop in case of a deserialization failure.
+                        self.is_done = true;
+                        return Err(Error::from(e));
                     }
-                    if (&*self.nlh).nlmsg_type == NLMSG_ERROR as u16 {
-                        // TODO: parse error code from msg properly
-                        // https://www.infradead.org/~tgr/libnl/doc/core.html#core_errmsg
-                        return Some(Result::Err(Error::NetLinkError));
-                    }
-                    let diag_msg = NLMSG_DATA!(self.nlh) as *const inet_diag_msg;
-                    let rtalen =
-                        (&*self.nlh).nlmsg_len as usize - NLMSG_LENGTH!(size_of::<inet_diag_msg>());
-                    let socket_info = parse_diag_msg(&*diag_msg, self.protocol, rtalen);
-                    self.nlh = NLMSG_NEXT!(self.nlh, self.numbytes);
-                    return Some(socket_info);
+                };
+            self.offset += rx_packet.header.length as usize;
+
+            match rx_packet.payload {
+                NetlinkPayload::Noop => {}
+                NetlinkPayload::InnerMessage(SockDiagMessage::InetResponse(response)) => {
+                    return Ok(Some(parse_diag_msg(&response, self.protocol)?));
                 }
+                NetlinkPayload::Done(_) => {
+                    self.is_done = true;
+                    return Ok(None);
+                }
+                _ => return Ok(None),
             }
         }
     }
 }
 
-impl Drop for NetlinkIterator {
-    fn drop(&mut self) {
-        unsafe {
-            let _ = try_close(self.socket);
-        }
+impl Iterator for NetlinkIterator {
+    type Item = Result<SocketInfo, Error>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.try_read_next_packet().transpose()
     }
 }
 
-unsafe fn send_diag_msg(sockfd: c_int, family: __u8, protocol: __u8) -> Result<(), Error> {
-    let mut sa: sockaddr_nl = std::mem::zeroed();
-    sa.nl_family = AF_NETLINK as sa_family_t;
-    sa.nl_pid = 0;
-    sa.nl_groups = 0;
-    let mut conn_req = inet_diag_req_v2 {
-        sdiag_family: family,
-        sdiag_protocol: protocol,
-        idiag_ext: 1 << (INET_DIAG_INFO - 1),
-        pad: 0,
-        idiag_states: TCPF_ALL,
-        id: std::mem::zeroed(),
-    };
-    let mut nlh = nlmsghdr {
-        nlmsg_len: NLMSG_LENGTH!(size_of::<inet_diag_req_v2>()) as __u32,
-        nlmsg_type: SOCK_DIAG_BY_FAMILY as _,
-        nlmsg_flags: (NLM_F_DUMP | NLM_F_REQUEST) as u16,
-        nlmsg_seq: 0,
-        nlmsg_pid: 0,
-    };
-    let mut iov = [
-        iovec {
-            iov_base: &mut nlh as *mut _ as *mut c_void,
-            iov_len: size_of::<nlmsghdr>() as size_t,
-        },
-        iovec {
-            iov_base: &mut conn_req as *mut _ as *mut c_void,
-            iov_len: size_of::<inet_diag_req_v2>() as size_t,
-        },
-    ];
+fn parse_diag_msg(diag_msg: &InetResponse, protocol: u8) -> Result<SocketInfo, Error> {
+    let src_port = diag_msg.header.socket_id.source_port;
+    let dst_port = diag_msg.header.socket_id.destination_port;
+    let src_ip = diag_msg.header.socket_id.source_address;
+    let dst_ip = diag_msg.header.socket_id.destination_address;
 
-    let mut msg: msghdr = std::mem::zeroed();
-    msg.msg_name = &mut sa as *mut _ as *mut _;
-    msg.msg_namelen = size_of::<sockaddr_nl>() as c_uint;
-    msg.msg_iov = &mut iov[0];
-    msg.msg_iovlen = 2;
-
-    match sendmsg(sockfd, &msg, 0) {
-        -1 => Result::Err(Error::OsError(io::Error::last_os_error())),
-        _ => Result::Ok(()),
-    }
-}
-
-unsafe fn parse_diag_msg(
-    diag_msg: &inet_diag_msg,
-    protocol: __u8,
-    rtalen: usize,
-) -> Result<SocketInfo, Error> {
-    let src_port = u16::from_be(diag_msg.id.idiag_sport);
-    let dst_port = u16::from_be(diag_msg.id.idiag_dport);
-    let src_ip = parse_ip(diag_msg.idiag_family, &diag_msg.id.idiag_src)?;
-    let dst_ip = parse_ip(diag_msg.idiag_family, &diag_msg.id.idiag_dst)?;
-
-    let sock_info = match protocol as i32 {
+    let sock_info = match protocol {
         IPPROTO_TCP => SocketInfo {
             protocol_socket_info: ProtocolSocketInfo::Tcp(TcpSocketInfo {
                 local_addr: src_ip,
                 local_port: src_port,
                 remote_addr: dst_ip,
                 remote_port: dst_port,
-                state: parse_tcp_state(diag_msg, rtalen),
+                state: TcpState::from(diag_msg.header.state),
             }),
-            associated_pids: Vec::with_capacity(0),
-            inode: diag_msg.idiag_inode,
-            uid: diag_msg.idiag_uid,
+            associated_pids: vec![],
+            inode: diag_msg.header.inode,
+            uid: diag_msg.header.uid,
         },
         IPPROTO_UDP => SocketInfo {
             protocol_socket_info: ProtocolSocketInfo::Udp(UdpSocketInfo {
                 local_addr: src_ip,
                 local_port: src_port,
             }),
-            associated_pids: Vec::with_capacity(0),
-            inode: diag_msg.idiag_inode,
-            uid: diag_msg.idiag_uid,
+            associated_pids: vec![],
+            inode: diag_msg.header.inode,
+            uid: diag_msg.header.uid,
         },
         _ => return Err(Error::UnknownProtocol(protocol)),
     };
 
     Ok(sock_info)
-}
-
-unsafe fn parse_ip(family: u8, bytes: &[__be32; 4]) -> Result<IpAddr, Error> {
-    let addr = match family as i32 {
-        AF_INET => IpAddr::V4(Ipv4Addr::from(
-            *(&bytes[0] as *const __be32 as *const [u8; 4]),
-        )),
-        AF_INET6 => IpAddr::V6(Ipv6Addr::from(
-            *(bytes as *const [__be32; 4] as *const u8 as *const [u8; 16]),
-        )),
-        _ => return Err(Error::UnsupportedSocketFamily(family as u32)),
-    };
-
-    Ok(addr)
-}
-
-unsafe fn parse_tcp_state(diag_msg: &inet_diag_msg, rtalen: usize) -> TcpState {
-    let mut len = rtalen as isize;
-    let mut attr = (diag_msg as *const inet_diag_msg).offset(1) as *const rtattr;
-    while RTA_OK!(attr, len) {
-        if (&*attr).rta_type == INET_DIAG_INFO as u16 {
-            let tcpi = read_unaligned(RTA_DATA!(attr) as *const tcp_info);
-            return TcpState::from(tcpi.tcpi_state);
-        }
-        attr = RTA_NEXT!(attr, len);
-    }
-    TcpState::TimeWait
-}
-
-unsafe fn try_close(sockfd: c_int) -> Result<(), Error> {
-    match close(sockfd) {
-        -1 => Result::Err(Error::OsError(io::Error::last_os_error())),
-        _ => Result::Ok(()),
-    }
 }

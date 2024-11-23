@@ -11,7 +11,7 @@ Provides unified interface and returns data structures which may have additional
 ```toml
 # Cargo.toml
 [dependencies]
-netstat2 = "0.10"
+netstat2 = "0.11"
 ```
 
 This is a fork based on the [netstat](https://crates.io/crates/netstat) crate by [ivxvm](https://github.com/ivxvm).
