@@ -1,6 +1,6 @@
 [package]
 name = "netstat2"
-version = "0.11.0"
+version = "0.11.1"
 authors = ["Ohad Ravid <ohad.rv@gmail.com>", "ivxvm <ivxvm@protonmail.com>"]
 edition = "2021"
 license = "MIT OR Apache-2.0"
@@ -25,7 +25,7 @@ name = "get_sockets_info_benchmark"
 harness = false
 
 [target.'cfg(any(target_os = "macos", target_os = "ios", target_os = "linux", target_os = "android"))'.build-dependencies]
-bindgen = "0.65"
+bindgen = "0.71"
 
 [target.'cfg(any(target_os = "macos", target_os = "ios"))'.dependencies]
 num-derive = "0.3"
