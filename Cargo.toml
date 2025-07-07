@@ -25,7 +25,7 @@ name = "get_sockets_info_benchmark"
 harness = false
 
 [target.'cfg(any(target_os = "macos", target_os = "ios", target_os = "linux", target_os = "android"))'.build-dependencies]
-bindgen = "0.71"
+bindgen = "0.72"
 
 [target.'cfg(any(target_os = "macos", target_os = "ios"))'.dependencies]
 num-derive = "0.3"
